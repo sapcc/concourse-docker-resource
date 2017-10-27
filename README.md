@@ -1,4 +1,11 @@
-# Docker Image Resource
+# Shared Docker Image Resource
+
+This resource is a fork of the official concourse [docker-image](https://github.com/concourse/docker-image-resource).
+
+Its different in that it uses the shared docker daemon running on on the worker VM.
+
+This requires a docker daemon on the worker to listen on 0.0.0.0:2375 so that its reachable from containers spawned by concourse.
+You need to somehow setup firewall rules (or security groups) to protect access to the socket from outside the VM.
 
 Tracks and builds [Docker](https://docker.io) images.
 
@@ -23,66 +30,6 @@ Note: docker registry must be [v2](https://docs.docker.com/registry/spec/api/).
 
 * `aws_secret_access_key`: *Optional.* AWS secret key to use for acquiring ECR
   credentials.
-
-* `insecure_registries`: *Optional.* An array of CIDRs or `host:port` addresses
-  to whitelist for insecure access (either `http` or unverified `https`).
-  This option overrides any entries in `ca_certs` with the same address.
-
-* `registry_mirror`: *Optional.* A URL pointing to a docker registry mirror service.
-
-* `ca_certs`: *Optional.* An array of objects with the following format:
-
-  ```yaml
-  ca_certs:
-  - domain: example.com:443
-    cert: |
-      -----BEGIN CERTIFICATE-----
-      ...
-      -----END CERTIFICATE-----
-  - domain: 10.244.6.2:443
-    cert: |
-      -----BEGIN CERTIFICATE-----
-      ...
-      -----END CERTIFICATE-----
-  ```
-
-  Each entry specifies the x509 CA certificate for the trusted docker registry
-  residing at the specified domain. This is used to validate the certificate of
-  the docker registry when the registry's certificate is signed by a custom
-  authority (or itself).
-
-  The domain should match the first component of `repository`, including the
-  port. If the registry specified in `repository` does not use a custom cert,
-  adding `ca_certs` will break the check script. This option is overridden by
-  entries in `insecure_registries` with the same address or a matching CIDR.
-
-* `client_certs`: *Optional.* An array of objects with the following format:
-
-  ```yaml
-  client_certs:
-  - domain: example.com:443
-    cert: |
-      -----BEGIN CERTIFICATE-----
-      ...
-      -----END CERTIFICATE-----
-    key: |
-      -----BEGIN RSA PRIVATE KEY-----
-      ...
-      -----END RSA PRIVATE KEY-----
-  - domain: 10.244.6.2:443
-    cert: |
-      -----BEGIN CERTIFICATE-----
-      ...
-      -----END CERTIFICATE-----
-    key: |
-      -----BEGIN RSA PRIVATE KEY-----
-      ...
-      -----END RSA PRIVATE KEY-----
-  ```
-
-  Each entry specifies the x509 certificate and key to use for authenticating
-  against the docker registry residing at the specified domain. The domain
-  should match the first component of `repository`, including the port.
 
 ## Behavior
 

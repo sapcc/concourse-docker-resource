@@ -24,15 +24,9 @@ cat > $payload <&0
 
 cd $source
 
-insecure_registries=$(jq -r '.source.insecure_registries // [] | join(" ")' < $payload)
-
-registry_mirror=$(jq -r '.source.registry_mirror // ""' < $payload)
-
 username=$(jq -r '.source.username // ""' < $payload)
 password=$(jq -r '.source.password // ""' < $payload)
 repository=$(jq -r '.source.repository // ""' < $payload)
-ca_certs=$(jq -r '.source.ca_certs // []' < $payload)
-client_certs=$(jq -r '.source.client_certs // []' < $payload)
 
 export AWS_ACCESS_KEY_ID=$(jq -r '.source.aws_access_key_id // ""' < $payload)
 export AWS_SECRET_ACCESS_KEY=$(jq -r '.source.aws_secret_access_key // ""' < $payload)
@@ -43,9 +37,8 @@ else
   registry=
 fi
 
-certs_to_file "$ca_certs"
-set_client_certs "$client_certs"
-start_docker "$insecure_registries" "$registry_mirror"
+export DOCKER_HOST=$(/sbin/ip route | awk '/default/ { print $3 }'):2375
+
 log_in "$username" "$password" "$registry"
 
 tag_source=$(jq -r '.source.tag // "latest"' < $payload)

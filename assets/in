@@ -22,16 +22,10 @@ payload=$(mktemp /tmp/resource-in.XXXXXX)
 
 cat > $payload <&0
 
-insecure_registries=$(jq -r '.source.insecure_registries // [] | join(" ")' < $payload)
-
-registry_mirror=$(jq -r '.source.registry_mirror // ""' < $payload)
-
 username=$(jq -r '.source.username // ""' < $payload)
 password=$(jq -r '.source.password // ""' < $payload)
 repository="$(jq -r '.source.repository // ""' < $payload)"
 tag="$(jq -r '.source.tag // "latest"' < $payload)"
-ca_certs=$(jq -r '.source.ca_certs // []' < $payload)
-client_certs=$(jq -r '.source.client_certs // []' < $payload)
 
 export AWS_ACCESS_KEY_ID=$(jq -r '.source.aws_access_key_id // ""' < $payload)
 export AWS_SECRET_ACCESS_KEY=$(jq -r '.source.aws_secret_access_key // ""' < $payload)
@@ -48,9 +42,7 @@ rootfs="$(jq -r '.params.rootfs // false' < $payload)"
 skip_download="$(jq -r '.params.skip_download // false' < $payload)"
 save="$(jq -r '.params.save // false' < $payload)"
 
-certs_to_file "$ca_certs"
-set_client_certs "$client_certs"
-start_docker "$insecure_registries" "$registry_mirror"
+export DOCKER_HOST=$(/sbin/ip route | awk '/default/ { print $3 }'):2375
 
 mkdir -p $destination
 
@@ -70,11 +62,10 @@ if [ "$skip_download" = "false" ]; then
   echo "$image_id" > ${destination}/image-id
   docker inspect $image_id > ${destination}/docker_inspect.json
 
-  docker run \
+  cat /opt/resource/print-metadata | docker run -i \
     --cidfile=/tmp/container.cid \
-    -v /opt/resource/print-metadata:/tmp/print-metadata \
-    --entrypoint /tmp/print-metadata  \
-    "$image_name" > ${destination}/metadata.json
+    --entrypoint /bin/sh  \
+    "$image_name" -c "cat > /print-metadata;chmod +x /print-metadata;/print-metadata" > ${destination}/metadata.json
 
   mkdir -p ${destination}/rootfs/
   docker export $(cat /tmp/container.cid) | tar --exclude="dev/*" -xf - -C ${destination}/rootfs/
