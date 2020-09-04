@@ -24,3 +24,4 @@ RUN set -e; for test in /tests/*.test; do \
 	done
 
 FROM resource
+LABEL source_repository="https://github.com/sapcc/concourse-docker-resource"
